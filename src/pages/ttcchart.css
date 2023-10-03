@@ -1,0 +1,26 @@
+.multi-date-picker input {
+    width: 407px;
+    color: transparent;
+    font-weight: 400;
+    line-height: 1;
+    padding: 13px 14px;
+    border-radius: 0;
+    font-size: 14px;
+}
+
+.multi-date-picker input::placeholder {
+    font-weight: 300;
+}
+
+.multi-date-picker .rmdp-panel {
+    width: 150px;
+}
+
+.multi-date-picker li {
+    padding: 0 8px;
+}
+
+.date-item {
+    writing-mode: tb;
+    text-orientation: upright;
+}
