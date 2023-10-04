@@ -34,7 +34,7 @@ const ySeries = (name, position, labels, offset = 0) => {
         name,
         position,
         offset,
-        alignTicks: true,
+        // alignTicks: true,
         axisLine: {
             show: true
         },
@@ -76,33 +76,21 @@ const options = (x, head, labels, zIndex) => {
         dataZoom: [
             {
                 show: true,
-                realtime: true,
-                start: 0,
-                end: 100,
-                xAxisData: [0, 1]
-            },
-            {
                 type: 'slider',
                 realtime: true,
                 start: 0,
                 end: 100,
-                xAxisData: [0, 1]
+                xAxisData: 0
             },
-            {
+            ...(zIndex !== null && zIndex !== false ? [{
                 yAxisIndex: zIndex,
                 show: true,
                 start: 0,
                 end: 100,
                 type: 'slider',
-                filterMode: 'none'
-            },
-            {
-                yAxisIndex: zIndex,
-                start: 0,
-                end: 100,
-                type: 'slider',
-                filterMode: 'none'
-            }
+                filterMode: 'none',
+                left: "0px"
+            }] : [])
         ],
         xAxis: {
             type: 'category',
@@ -161,6 +149,79 @@ const customOptions = (x, head, labels) => {
     }
 }
 
+const yDataZoom = (yZoom) => {
+    const zoom = {
+        show: true,
+        start: 0,
+        end: 100,
+        type: "slider",
+        filterMode: "none",
+    };
+
+    const offsetAmount = 60;
+    let leftCounter = 0;
+    let rightCounter = 0;
+
+    if (yZoom.length === 1) {
+        return [{
+            ...zoom,
+            yAxisIndex: 0,
+            left: "0%"
+        }];
+    }
+
+    const yZoomAxis = yZoom.map((y, index) => {
+        if (index % 2 === 0) {
+            const leftOffset = leftCounter === 0 ? "0px" : `${leftCounter * offsetAmount}px`;
+            leftCounter++;
+            return {
+                ...zoom,
+                yAxisIndex: y,
+                left: leftOffset
+            };
+        } else {
+            const rightOffset = rightCounter === 0 ? "0px" : `${rightCounter * offsetAmount}px`;
+            rightCounter++;
+            return {
+                ...zoom,
+                yAxisIndex: y,
+                right: rightOffset
+            };
+        }
+    });
+
+    return yZoomAxis;
+}
+
+
+
+// const yDataZoom = (yZoom) => {
+//     const zoom = {
+//         show: true,
+//         start: 0,
+//         end: 100,
+//         type: "slider",
+//         filterMode: "none",
+//     }
+
+//     if (yZoom.length == 1) {
+//         return {
+//             ...zoom,
+//             yAxisIndex: 0,
+//             left: "0%"
+//         }
+//     }
+//     const yZoomAxis = [];
+//     yZoom.forEach(y => {
+//         yZoomAxis.push({
+//             ...zoom,
+//             yAxisIndex: y,
+//             ...(y % 2 ? {left: `${offset}%`} : {right: `${offset}%`})
+//         })
+//     })
+//     return yZoomAxis;
+// }
+
 const getColumns = (data, columns, title, types, zoom, ySeriesType) => {
     const x = [];
     const annotation = [];
@@ -205,7 +266,7 @@ const getColumns = (data, columns, title, types, zoom, ySeriesType) => {
                     borderColor: '#000',
                     borderType: "solid",
                     borderWidth: 1,
-                    padding: [4,4,6,6],
+                    padding: [4, 4, 6, 6],
                     textBorderColor: "#fff",
                     textBorderWidth: 1,
                     textBorderType: "solid"
@@ -360,7 +421,7 @@ const extractColumns = (data, columns, kpiTypes) => {
                     borderColor: '#000',
                     borderType: "solid",
                     borderWidth: 1,
-                    padding: [4,4,6,6],
+                    padding: [4, 4, 6, 6],
                     textBorderColor: "#fff",
                     textBorderWidth: 1,
                     textBorderType: "solid"
@@ -397,7 +458,7 @@ const extractColumns = (data, columns, kpiTypes) => {
                 type: 'value',
                 name: unitMap.get(yUnitArray[0]),
                 position: "left",
-                alignTicks: true,
+                // alignTicks: true,
                 axisLine: {
                     show: true
                 },
@@ -474,7 +535,7 @@ const extractColumns = (data, columns, kpiTypes) => {
             name: unitMap.get(val),
             position,
             offset,
-            alignTicks: true,
+            // alignTicks: true,
             axisLine: {
                 show: true
             },
@@ -552,4 +613,4 @@ const extractColumns = (data, columns, kpiTypes) => {
     }
 }
 
-export { getColumns, setType, setSeries, extractColumns }
+export { getColumns, setType, setSeries, extractColumns, yDataZoom }

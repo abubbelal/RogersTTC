@@ -8,7 +8,9 @@ import CustomChart from "../components/custom/CustomChart";
 import ControlledCharts from "../components/controlled/ControlledCharts";
 import "./ttcchart.css";
 
-import jsonData from "../data/data.json";
+// import jsonData from "../data/data.json";
+// import jsonData from "../data/oct2.json";
+import jsonData from "../data/oct2-multi.json";
 
 const url = "";
 const TTCChart = () => {
