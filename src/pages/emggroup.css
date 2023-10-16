@@ -1,0 +1,98 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+#root {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.autocomplete {
+    border: gray;
+}
+
+.emg-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+.emg-group {
+    background-color: aliceblue;
+    padding: 6px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
+.emg-group:hover {
+    background-color: rgb(226, 240, 252);
+}
+
+.emg-dropdown {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.wrapper {
+    display: grid;
+    grid-template-columns: 500px 500px;
+    gap: 12px;
+}
+
+.card {
+    height: 350px;
+    background-color: aliceblue;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.card h3 {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1;
+    color: rgb(8, 58, 102);
+    margin-bottom: 24px;
+}
+
+/*  
+  // const url = 'https://netstat.rogers.com/getLocationSearch-2.php'
+  
+  */
+
+
+.emg-chip-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.chip {
+    font-size: 12px;
+    background-color: rgb(209, 232, 252);
+    color: rgb(4, 50, 91);
+    border-radius: 999px;
+    padding: 4px 8px;
+    line-height: 1;
+    cursor: pointer;
+    margin-top: 16px;
+}
+
+.chip:hover {
+    background-color: rgb(194, 224, 250);
+}
+
+.update-emg {
+    margin-top: 16px;
+}
