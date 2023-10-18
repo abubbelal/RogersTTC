@@ -3,11 +3,11 @@
     padding: 0;
 }
 
-#root {
+/* #root {
     max-width: 1280px;
     margin: 0 auto;
     padding: 2rem;
-}
+} */
 
 .autocomplete {
     border: gray;
@@ -86,7 +86,8 @@
     padding: 4px 8px;
     line-height: 1;
     cursor: pointer;
-    margin-top: 16px;
+    /* margin-top: 16px; */
+    height: max-content;
 }
 
 .chip:hover {
@@ -95,4 +96,18 @@
 
 .update-emg {
     margin-top: 16px;
+}
+
+.emg-container h3, .new-emg-group h3 {
+    font-size: theme(fontSize.2xl);
+    line-height: 1;
+    margin: 16px 0;
+    color: theme(textColor.m-blue.800)
+}
+
+.emg-chip-container {
+    background-color: theme(backgroundColor.m-blue.200);
+    padding: 8px;
+    margin-top: 16px;
+    min-height: 250px;
 }

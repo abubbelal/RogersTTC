@@ -5,12 +5,30 @@ import CustomChart from "../components/custom/CustomChart";
 import Modal from "../components/Modal";
 import "./emggroup.css";
 
+import ModalTabs from "../components/ModalTabs";
+import ModalTab from "../components/ModalTab";
+import "./modaltabs.css";
+
 // import jsonData from "../data/oct2-multi.json";
 import jsonData from "../data/oct2-multi.json";
 import { AutoComplete, Button, Select } from "antd";
 import axios from "axios";
+import Loader from "../ui/Loader";
 
-const url = '';
+const url = 'http://netstat.rogers.com/getLocationSearch-2.php'; // for getting EMG Codes
+const api = 'http://netstat.rogers.com/EMGFilter.php?api='; // For CRUD emg groups
+const dataUrl = 'http://netstat.rogers.com/sql/emg.php?emg='; // for getting emg group chart data
+
+
+const tEmgGroups = [
+    { id: "2", emgGroup: "C31A,C31EB", reg_date: "sdfd" },
+    { id: "3", emgGroup: "C31B,T52M,T52MB", reg_date: "sdfd" },
+    { id: "5", emgGroup: "C31E,C31A,C31EB, C31AA", reg_date: "sdfd" },
+    { id: "6", emgGroup: "T52M,T52MB,T52MQ", reg_date: "sdfd" },
+    { id: "7", emgGroup: "BTHA,T52M", reg_date: "sdfd" },
+]
+
+
 const EMGGroup = () => {
     // New Group
     const [options, setOptions] = useState([]);
@@ -28,17 +46,22 @@ const EMGGroup = () => {
     const [emgGroups, setEmgGroups] = useState();
     const [isModalOpen, setModalOpen] = useState(false)
     const [chartData, setChartData] = useState(jsonData);
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState(false)
+
 
 
     const loadGroups = async () => {
-        const response = await axios.get(`${url}`);
-        const data = response.data;
-        if (response.data.error) {
-            setEmgGroups();
-            return;
-        }
-        setEmgGroups(data.data)
-        setSelectedEMG(data.data[0].id)
+        // const response = await axios.get(`${api}groups`);
+        // const data = response.data;
+        // if (response.data.error) {
+        //     setEmgGroups();
+        //     return;
+        // }
+        // setEmgGroups(data.data)
+        // setSelectedEMG(data.data[0].emgGroup)
+        setEmgGroups(tEmgGroups)
+        setSelectedEMG(tEmgGroups[0].emgGroup)
     }
 
     useEffect(() => {
@@ -53,6 +76,7 @@ const EMGGroup = () => {
                 const response = await axios.get(`${url}?term=${value}`)
                 const suggestions = response.data.map(emg => emg.label)
                 setOptions(suggestions.map(suggestion => ({ value: suggestion.formatted })))
+                // setOptions(suggestions.map(val => ({ value: val })))
             } catch (error) {
                 console.error(`Error fetching data: ${error}`)
             }
@@ -66,12 +90,12 @@ const EMGGroup = () => {
                 const response = await axios.get(`${url}?term=${value}`)
                 const suggestions = response.data.map(emg => emg.label)
                 setUpdatedOptions(suggestions.map(sug => ({ value: sug.formatted })))
+                // setUpdatedOptions(suggestions.map(val => ({ value: val })))
             } catch (error) {
                 console.error(`Error fetching data: ${error}`)
             }
         }
     }
-
 
     const handleSelect = (value) => {
         const newSelectedItems = new Set(selectedItems);
@@ -89,10 +113,9 @@ const EMGGroup = () => {
         setUpdatedOptions([]);
     }
 
-
     const addGroup = async () => {
         try {
-            const response = await axios.post(`${urlLocal}/add`, {
+            const response = await axios.post(`${api}add`, {
                 add: Array.from(selectedItems).toString()
             })
 
@@ -108,7 +131,7 @@ const EMGGroup = () => {
     const updateGroup = async () => {
         if (setUpdatedItems.size == 0) return;
         try {
-            const response = await axios.post(`${urlLocal}/update`, {
+            const response = await axios.post(`${api}update`, {
                 update: selectedEMG,
                 emgGroup: Array.from(updatedItems).toString()
             })
@@ -123,11 +146,9 @@ const EMGGroup = () => {
         loadGroups();
     }
 
-
-
     const deleteGroup = async () => {
         try {
-            const response = await axios.post(`${urlLocal}/delete`, {
+            const response = await axios.post(`${urlLocal}delete`, {
                 delete: selectedEMG
             });
 
@@ -154,8 +175,6 @@ const EMGGroup = () => {
         setSelectedEMG(value);
     }
 
-
-
     const handleFilterOption = (input, option) => {
         return option.label.toLowerCase().includes(input.toLowerCase());
     }
@@ -178,6 +197,25 @@ const EMGGroup = () => {
         });
     }
 
+    const getEmgData = async () => {
+        setLoading(true)
+        setError(false)
+        try {
+            const response = await axios.get(`${dataUrl}${selectedEMG}`)
+            const data = response.data?.agg
+
+            if (data.cols) {
+                setChartData(data)
+                setError(false)
+            } else {
+                setChartData(null)
+                setError(true)
+            }
+            setLoading(false)
+        } catch (err) {
+            console.error(err)
+        }
+    }
 
     return (
         <>
@@ -187,48 +225,54 @@ const EMGGroup = () => {
                 </svg>
                 <h1 className='text-center w-full text-3xl font-medium leading-none tracking-wider text-m-red-500'>TTC Chart</h1>
             </div>
-            <button onClick={() => setModalOpen(true)}>Open Modal</button>
+            <div className="px-30 py-30">
+                <button className="w-max px-4 py-3 bg-m-black-900 text-m-black-100 text-sm font-normal leading-none tracking-wide hover:bg-m-black-800 duration-150 ease-in transition-colors" onClick={() => setModalOpen(true)}>Open EMG Modal</button>
+            </div>
             <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)}>
-                <div className="emg-group-wrapper">
+                {/* <div className="emg-group-wrapper grid grid-cols-2 gap-6 m-4">
                     <div className="emg-groups">
                         {
                             emgGroups ? (
                                 <div className="emg-container">
-                                    <h3>EMG Groups</h3>
-                                    <Select
-                                        showSearch
-                                        filterOption={handleFilterOption}
-                                        value={selectedEmg}
-                                        onChange={handleEmgChange}
-                                        options={emgGroups.map(item => ({
-                                            label: item.emgGroup,
-                                            value: item.id
-                                        }))}
-                                        style={{ width: 320 }}
-                                    />
-                                    <button onClick={() => setShowUpdatedInput(!showUpdatedInput)}>Update</button>
-                                    <button onClick={deleteGroup}>Delete Group</button>
-
+                                    <h3>Current EMG Groups</h3>
+                                    <div className="flex flex-col">
+                                        <Select
+                                            showSearch
+                                            filterOption={handleFilterOption}
+                                            value={selectedEMG}
+                                            onChange={handleEmgChange}
+                                            options={emgGroups.map(item => ({
+                                                label: item.emgGroup,
+                                                value: item.emgGroup
+                                            }))}
+                                        />
+                                        <div className="grid grid-cols-3 gap-3 my-2">
+                                            <button className="emgBtns px-3 py-2 font-normal leading-none bg-m-blue-300 text-m-blue-800 rounded-md text-sm hover:bg-m-blue-800 ease-in hover:text-m-blue-100 transition-colors duration-150 cursor-pointer" onClick={() => setShowUpdatedInput(!showUpdatedInput)}>Update</button>
+                                            <button className="emgBtns px-3 py-2 font-normal leading-none bg-m-blue-300 text-m-blue-800 rounded-md text-sm hover:bg-m-blue-800 ease-in hover:text-m-blue-100 transition-colors duration-150 cursor-pointer" onClick={deleteGroup}>Delete Group</button>
+                                            <button className="emgBtns px-3 py-2 font-normal leading-none bg-m-blue-300 text-m-blue-800 rounded-md text-sm hover:bg-m-blue-800 ease-in hover:text-m-blue-100 transition-colors duration-150 cursor-pointer" onClick={getEmgData}>Fetch EMG Chart</button>
+                                        </div>
+                                    </div>
                                     {
-                                        showUpdatedInput && (
+                                        true && (
                                             <div className="update-emg">
-                                                <AutoComplete
-                                                    options={updateOptions}
-                                                    onSelect={handleUpdateSelect}
-                                                    onSearch={handleUpdateSearch}
-                                                    value={updateValue}
-                                                    style={{ width: 350 }}
-                                                />
-                                                <button onClick={updateGroup}>Update Group</button>
+                                                <div className="flex flex-col gap-2">
+                                                    <AutoComplete
+                                                        options={updateOptions}
+                                                        onSelect={handleUpdateSelect}
+                                                        onSearch={handleUpdateSearch}
+                                                        value={updateValue}
+                                                    />
+                                                    <button className="emgBtns w-max px-3 py-2 font-normal leading-none bg-m-blue-300 text-m-blue-800 rounded-md text-sm hover:bg-m-blue-800 ease-in hover:text-m-blue-100 transition-colors duration-150 cursor-pointer" onClick={updateGroup}>Update Group</button>
+                                                </div>
 
                                                 <div className="emg-chip-container" onClick={removeUpdateChip}>
-                                                    {
-                                                        updatedItems && (
-                                                            Array.from(updatedItems).map((item, index) => (
-                                                                <div className="chip" key={index}>{item}</div>
-                                                            ))
-                                                        )
-                                                    }
+                                                    <div className="flex flex-wrap gap-3 flex-row h-max">
+                                                        <div className="chip">random Chip</div>
+                                                        <div className="chip">random Chip</div>
+                                                        <div className="chip">random Chip</div>
+                                                        <div className="chip">random Chip</div>
+                                                        <div className="chip">random Chip</div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )
@@ -240,31 +284,185 @@ const EMGGroup = () => {
                         }
                     </div>
                     <div className="new-emg-group">
-                        <h3>Add new EMG group</h3>
-                        <AutoComplete
-                            className="autocomplete"
-                            style={{ width: 350 }}
-                            onSearch={handleSearch}
-                            options={options}
-                            onSelect={handleSelect}
-                            value={inputValue}
-                        />
-                        <button onClick={addGroup}>Add EMG Group</button>
+                        <h3>Add New EMG Group</h3>
+                        <div className="flex flex-col gap-2">
+                            <AutoComplete
+                                className="autocomplete"
+                                onSearch={handleSearch}
+                                options={options}
+                                onSelect={handleSelect}
+                                value={inputValue}
+                            />
+                            <button className="emgBtns w-max px-3 py-2 font-normal leading-none bg-m-blue-300 text-m-blue-800 rounded-md text-sm hover:bg-m-blue-800 ease-in hover:text-m-blue-100 transition-colors duration-150 cursor-pointer" onClick={addGroup}>Add EMG Group</button>
+                        </div>
                         <div className="emg-chip-container" onClick={removeChip}>
+                            <div className="flex flex-wrap gap-3 flex-row h-max">
+                                <div className="chip">random Chip</div>
+                                <div className="chip">random Chip</div>
+                                <div className="chip">random Chip</div>
+                                <div className="chip">random Chip</div>
+                                <div className="chip">random Chip</div>
+                                <div className="chip">random Chip</div>
+                                <div className="chip">random Chip</div>
+                                <div className="chip">random Chip</div>
+                                <div className="chip">random Chip</div>
+                                <div className="chip">random Chip</div>
+                            </div>
+                        </div>
+                    </div>
+                </div> */}
+
+                <ModalTabs>
+                    <ModalTab title="Current EMG Groups">
+                        <div className="emg-groups">
                             {
+                                emgGroups ? (
+                                    <div className="emg-container">
+                                        <div className="flex flex-row gap-6">
+                                            <Select
+                                                showSearch
+                                                filterOption={handleFilterOption}
+                                                value={selectedEMG}
+                                                onChange={handleEmgChange}
+                                                options={emgGroups.map(item => ({
+                                                    label: item.emgGroup,
+                                                    value: item.emgGroup
+                                                }))}
+                                                className="flex-grow"
+                                            // style={{ width: 320 }}
+                                            />
+                                            <div className="grid grid-cols-3 gap-3">
+                                                <button className="emgBtns px-3 py-2 font-normal leading-none bg-m-blue-300 text-m-blue-800 rounded-md text-sm hover:bg-m-blue-800 ease-in hover:text-m-blue-100 transition-colors duration-150 cursor-pointer" onClick={() => setShowUpdatedInput(!showUpdatedInput)}>Update</button>
+                                                <button disabled={true} className={`${true ? 'cursor-not-allowed bg-m-blue-200 text-m-blue-700' : 'bg-m-blue-300 text-m-blue-800 hover:bg-m-blue-800 hover:text-m-blue-100 ease-in transition-colors duration-150 cursor-pointer'} emgBtns px-3 py-2 font-normal leading-none rounded-md text-sm`} onClick={deleteGroup}>Delete Group</button>
+                                                <button disabled={true} className={`${true ? 'cursor-not-allowed bg-m-blue-200 text-m-blue-700' : 'bg-m-blue-300 text-m-blue-800 hover:bg-m-blue-800 hover:text-m-blue-100 ease-in transition-colors duration-150 cursor-pointer'} emgBtns px-3 py-2 font-normal leading-none rounded-md text-sm`} onClick={getEmgData}>Fetch EMG Chart</button>
+                                            </div>
+                                        </div>
+                                        {
+                                            // showUpdatedInput && (
+                                            true && (
+                                                <div className="update-emg">
+                                                    <div className="flex flex-row gap-2">
+                                                        <AutoComplete
+                                                            className="autocomplete flex-grow"
+                                                            options={updateOptions}
+                                                            onSelect={handleUpdateSelect}
+                                                            onSearch={handleUpdateSearch}
+                                                            value={updateValue}
+                                                        // style={{ width: 350 }}
+                                                        />
+                                                        <button className="emgBtns w-max px-3 py-2 font-normal leading-none bg-m-blue-300 text-m-blue-800 rounded-md text-sm hover:bg-m-blue-800 ease-in hover:text-m-blue-100 transition-colors duration-150 cursor-pointer" onClick={updateGroup}>Update Group</button>
+                                                    </div>
+
+                                                    <div className="emg-chip-container" onClick={removeUpdateChip}>
+                                                        {/* {
+                                                        updatedItems && (
+                                                            Array.from(updatedItems).map((item, index) => (
+                                                                <div className="chip" key={index}>{item}</div>
+                                                                ))
+                                                                )
+                                                            } */}
+
+                                                        <div className="flex flex-wrap gap-3 flex-row h-max">
+                                                            <div className="chip">random Chip</div>
+                                                            <div className="chip">random Chip</div>
+                                                            <div className="chip">random Chip</div>
+                                                            <div className="chip">random Chip</div>
+                                                            <div className="chip">random Chip</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )
+                                        }
+                                    </div>
+                                ) : (
+                                    <h3>EMG groups is empty</h3>
+                                )
+                            }
+                        </div>
+                    </ModalTab>
+                    <ModalTab title="Create New EMG Group">
+                        <div className="new-emg-group">
+                            <div className="flex flex-row gap-2">
+                                <AutoComplete
+                                    className="autocomplete flex-grow"
+                                    // style={{ width: '100%' }}
+                                    onSearch={handleSearch}
+                                    options={options}
+                                    onSelect={handleSelect}
+                                    value={inputValue}
+                                />
+                                <button className="emgBtns w-max px-3 py-2 font-normal leading-none bg-m-blue-300 text-m-blue-800 rounded-md text-sm hover:bg-m-blue-800 ease-in hover:text-m-blue-100 transition-colors duration-150 cursor-pointer" onClick={addGroup}>Add EMG Group</button>
+                            </div>
+                            <div className="emg-chip-container" onClick={removeChip}>
+                                {/* {
                                 selectedItems && (
                                     Array.from(selectedItems).map((item, index) => (
                                         <div className="chip" key={index}>{item}</div>
                                     ))
                                 )
-                            }
+                            } */}
+                                <div className="flex flex-wrap gap-3 flex-row h-max">
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                    <div className="chip">random Chip</div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    </ModalTab>
+                </ModalTabs>
             </Modal>
 
 
             {
+                loading ? (
+                    <div className="content-wrapper flex items-center justify-center flex-grow">
+                        <Loader />
+                    </div>
+                ) : (
+                    error ? (
+                        <div className="content-wrapper flex items-center justify-center flex-grow">
+                            <p className="text-2xl font-normal text-m-black-500 uppercase tracking-wide">Failed to fetch data for selected dates. Please try a different date.</p>
+                        </div>
+                    ) : (
+                        chartData ? (
+                            <div className="chart-content h-full flex flex-row flex-grow">
+                                <ChartTabs>
+                                    <Tab title="TTC Charts">
+                                        <ControlledCharts data={jsonData} />
+                                    </Tab>
+                                    <Tab title="Custom Charts">
+                                        <CustomChart data={jsonData} />
+                                    </Tab>
+                                </ChartTabs>
+                            </div>
+                        ) : (
+                            <div className="content-wrapper flex items-center justify-center flex-grow">
+                                <p className="text-2xl font-normal text-m-black-500 uppercase tracking-wide">Please select an EMG group to fetch chart data.</p>
+                            </div>
+                        )
+                    )
+                )
+            }
+
+
+            {/* {
                 chartData && (
                     <div className="chart-content h-full flex flex-row flex-grow">
                         <ChartTabs>
@@ -277,7 +475,7 @@ const EMGGroup = () => {
                         </ChartTabs>
                     </div>
                 )
-            }
+            } */}
         </>
     )
 }
